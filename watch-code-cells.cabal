@@ -1,0 +1,40 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.37.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           watch-code-cells
+version:        0.0.0
+synopsis:       Like ghcid for plain text jupyter notebooks.
+license:        BSD-2
+license-file:   LICENSE
+build-type:     Simple
+
+executable watch-code-cells
+  main-is: main.hs
+  other-modules:
+      Paths_watch_code_cells
+  default-extensions:
+      BlockArguments
+      DeriveDataTypeable
+      LambdaCase
+      OverloadedStrings
+      RecordWildCards
+      ScopedTypeVariables
+      TupleSections
+  ghc-options: -threaded
+  build-depends:
+      base
+    , bytestring
+    , cmdargs
+    , containers
+    , directory
+    , filepath
+    , hinotify
+    , lens
+    , process
+    , split
+    , text
+    , time
+  default-language: Haskell2010

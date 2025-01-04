@@ -1,0 +1,32 @@
+synopsis: Like ghcid for plain text jupyter notebooks.
+
+license: BSD-2
+
+dependencies:
+  - base
+  - hinotify
+  - split
+  - lens
+  - process
+  - bytestring
+  - text
+  - filepath
+  - directory
+  - containers
+  - time
+  - cmdargs
+
+default-extensions:
+  - BlockArguments
+  - DeriveDataTypeable
+  - LambdaCase
+  - OverloadedStrings
+  - RecordWildCards
+  - ScopedTypeVariables
+  - TupleSections
+
+executable:
+  ghc-options:
+    -threaded
+  main:
+    main.hs
