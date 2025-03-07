@@ -40,7 +40,7 @@ options =
       test = def &= help "Evaluate this expression after the last cell",
       setup = def &= help "Evaluate this expression before the first cell",
       debounce_s = 0.2 &= help "After receiving an event, delay running this many seconds (0.2 by default): only resend run once this time limit",
-      retry_us = 100000 &= help "When reading filepath, wait this many microseconds",
+      retry_us = 100000 &= help "When rereading a filepath, wait this many microseconds",
       retry_attempts = 10 &= help "If reading the filepath fails, try this many attempts. 0 for infinite retries."
     }
     &= summary "watch-code-cells <file>"

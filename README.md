@@ -13,7 +13,7 @@ Common flags:
   -d --debounce-s=NUM      After receiving an event, delay running this many
                            seconds (0.2 by default): only resend run once this
                            time limit
-     --retry-us=INT        When reading filepath, wait this many microseconds
+     --retry-us=INT        When rereading a filepath, wait this many microseconds
      --retry-attempts=INT  If reading the filepath fails, try this many
                            attempts. 0 for infinite retries.
   -? --help                Display help message
