@@ -10,6 +10,9 @@ Common flags:
                            or directory changes (defaults to none)
   -t --test=ITEM           Evaluate this expression after the last cell
   -s --setup=ITEM          Evaluate this expression before the first cell
+  -d --debounce-s=NUM      After receiving an event, delay running this many
+                           seconds (0.2 by default): only resend run once this
+                           time limit
      --retry-us=INT        When reading filepath, wait this many microseconds
      --retry-attempts=INT  If reading the filepath fails, try this many
                            attempts. 0 for infinite retries.
@@ -39,5 +42,4 @@ see also https://github.com/ndmitchell/ghcid, knitr, jupyter
 
 ## TODO
 
- - [ ] rate limiting debounce
  - [ ] additional events

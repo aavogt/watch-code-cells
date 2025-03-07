@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeApplications #-}
+
 import Control.Concurrent hiding (yield)
 import Control.Exception
 import Control.Lens
@@ -24,6 +26,7 @@ data WatchCodeCells = WatchCodeCells
     reload :: [FilePath],
     restart :: [FilePath],
     test, setup :: String,
+    debounce_s :: Double,
     retry_us, retry_attempts :: Int
   }
   deriving (Show, Data)
@@ -36,6 +39,7 @@ options =
       restart = def &= typFile &= help "Restart python/R/maxima/julia when the given file or directory changes (defaults to none)",
       test = def &= help "Evaluate this expression after the last cell",
       setup = def &= help "Evaluate this expression before the first cell",
+      debounce_s = 0.2 &= help "After receiving an event, delay running this many seconds (0.2 by default): only resend run once this time limit",
       retry_us = 100000 &= help "When reading filepath, wait this many microseconds",
       retry_attempts = 10 &= help "If reading the filepath fails, try this many attempts. 0 for infinite retries."
     }
@@ -93,6 +97,7 @@ main = do
     exitFailure
 
   (ch, _inotify) <- setupInotify options
+  cch <- debounceChan (round (1e6 * debounce_s)) ch
   writeChan ch Chunk -- initial run
   -- variables for the interpreter are py though it could be maxima/R etc.
   pyhv <- newEmptyMVar
@@ -115,7 +120,7 @@ main = do
     ref <- newIORef []
 
     let step = do
-          chanAct <- readChan ch
+          chanAct <- maximum <$> readChan cch
           let additions x = setup : x <> [test]
           nc <- additions . splitContent ext <$> readFileRetry retry_us (retry_attempts - 1) filepath
           oc <- readIORef ref
@@ -153,7 +158,7 @@ readFileRetry us n filepath = go n
               go (max (-1) (n - 1))
             else throwIO e
 
-data ChanAct = Chunk | Restart | Reload deriving (Show)
+data ChanAct = Chunk | Reload | Restart deriving (Show, Eq, Ord)
 
 instance Exception ChanAct
 
@@ -184,3 +189,31 @@ getMaybeFilePath = \case
   Modified {maybeFilePath = x} -> x
   Attributes {maybeFilePath = x} -> x
   _ -> Nothing
+
+-- | @debounceChan us ch@ produces a new chan @cch@
+-- that chunks the contents of @ch@ every @us@ microseconds
+-- (with the newest at the head of the list)
+debounceChan :: Int -> Chan a -> IO (Chan [a])
+debounceChan us ch = do
+  cch <- newChan
+  chunk <- newIORef []
+  lock <- newEmptyMVar
+
+  delay <- forkIO $ forever $ try @ResetTimer do
+    threadDelay us
+    tryPutMVar lock ()
+
+  forkIO $ forever do
+    v <- readChan ch
+    atomicModifyIORef chunk \vs -> (v : vs, ())
+    throwTo delay ResetTimer
+
+  forkIO $ forever do
+    takeMVar lock
+    v <- atomicModifyIORef chunk ([],)
+    unless (null v) (writeChan cch v)
+  return cch
+
+data ResetTimer = ResetTimer deriving (Show)
+
+instance Exception ResetTimer
