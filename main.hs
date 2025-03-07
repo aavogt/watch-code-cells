@@ -166,15 +166,21 @@ setupInotify WatchCodeCells {..} = do
         M.fromListWith
           (<>)
           [ ( d,
-              \case
-                Modified {maybeFilePath = Just q} | q == p -> writeChan ch doAll
-                _ -> return ()
+              \ev -> sequenceA_ do
+                q <- getMaybeFilePath ev
+                guard (p == q)
+                Just (writeChan ch doAll)
             )
             | ((d, p), doAll) <-
                 (filepath, Chunk) : map (,Restart) restart <> map (,Reload) reload
                   <&> _1 %~ over each B8.pack . splitFileName
           ]
   inotify <- initINotify
-  let eventVarieties = [Modify, CloseWrite, MoveIn, MoveOut, MoveSelf]
+  let eventVarieties = [Modify, Attrib, CloseWrite, MoveIn, MoveOut, MoveSelf]
   for_ (M.toList inotifyMap) (uncurry (addWatch inotify eventVarieties))
   return (ch, inotify)
+
+getMaybeFilePath = \case
+  Modified {maybeFilePath = x} -> x
+  Attributes {maybeFilePath = x} -> x
+  _ -> Nothing
