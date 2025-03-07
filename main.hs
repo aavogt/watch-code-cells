@@ -164,7 +164,7 @@ setupInotify WatchCodeCells {..} = do
   ch <- newChan
   let inotifyMap =
         M.fromListWith
-          (>>)
+          (<>)
           [ ( d,
               \case
                 Modified {maybeFilePath = Just q} | q == p -> writeChan ch doAll
