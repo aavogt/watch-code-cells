@@ -36,3 +36,8 @@ cabal install
 ```
 
 see also https://github.com/ndmitchell/ghcid, knitr, jupyter
+
+## TODO
+
+ - [ ] rate limiting debounce
+ - [ ] additional events
