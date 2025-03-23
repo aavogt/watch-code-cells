@@ -1,7 +1,7 @@
 # watch-code-cells
 
 ```bash
-watchcodecells [OPTIONS] [FILE]
+watch-code-cells [OPTIONS] [FILE]
 
 Common flags:
      --reload=FILE         Resend all chunks when the given file or directory
@@ -42,4 +42,9 @@ see also https://github.com/ndmitchell/ghcid, knitr, jupyter
 
 ## TODO
 
- - [ ] additional events
+ - [ ] additional/configurable events
+ - [ ] --auto infer inputs files needs:
+  - [x] own pid System.Posix.Process.getProcessID
+  - [x] /proc/<own pid>/task/<own pid>/children has the interpreter pid
+  - [ ] /proc/<child>/fd/* is the list of open files?
+  - [ ] but these change over time?
