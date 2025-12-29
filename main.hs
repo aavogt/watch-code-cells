@@ -65,6 +65,7 @@ interpreterName = \case
   ".R" -> ("R", ["-q", "--no-save"])
   ".py" -> ("python", ["-i", "-u"])
   ".mac" -> ("maxima", ["-q"])
+  ".wxm" -> ("maxima", ["-q"])
   ".jl" -> ("julia", ["-q"])
   x -> error $ "Don't know how to interpret file extension " <> show x
 
