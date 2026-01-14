@@ -57,10 +57,10 @@ options =
 splitContent = splitOn . getDelimiter
   where
     getDelimiter = \case
-      ".R" -> "\n# %%"
+      ".r" -> "\n# %%"
       ".py" -> "\n# %%"
       p | p `elem` [".mac", ".wxm"] -> "\n/* [wxMaxima: input   start ] */"
-      ".Rmd" -> "\n```" -- TODO regex-applicative would be better, plus this format allows different interpreters, chunk options etc.
+      ".rmd" -> "\n```" -- TODO regex-applicative would be better, plus this format allows different interpreters, chunk options etc.
       ".jl" -> "\n# %%"
       _ -> ""
 
@@ -69,7 +69,7 @@ interpreterName = \case
   ".mac" -> ("maxima", ["-q"])
   ".wxm" -> ("maxima", ["-q"])
   ".jl" -> ("julia", ["-q"])
-  x | x `elem` [".r", ".rmd"] -> ("R", ["-q", "--no-save"])
+  x | x `elem` [".r", ".rmd"] -> ("R", ["-q", "--no-save", "--interactive"])
   x -> error $ "Don't know how to interpret file extension " <> show x
 
 interpreterWrap = \cases
@@ -96,7 +96,7 @@ pyprocess ext = do
 main = do
   let options' = cmdArgsMode options
   options@WatchCodeCells {..} <- cmdArgsRun options'
-  let ext = takeExtension filepath
+  let ext = map toLower (takeExtension filepath)
   when (null filepath) $ do
     print (helpText [] HelpFormatDefault options')
     exitFailure
