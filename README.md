@@ -38,7 +38,7 @@ cd watch-code-cells
 cabal install
 ```
 
-see also https://github.com/ndmitchell/ghcid, knitr, jupyter
+see also https://github.com/ndmitchell/ghcid, knitr, jupyter, ipython %load_ext autoreload
 
 ## TODO
 
