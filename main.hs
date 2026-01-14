@@ -82,7 +82,7 @@ stripCommonPrefix _ ys = ys
 
 -- also have an R option
 pyprocess ext = do
-  let interp = interpreterName (map toLower ext)
+  let interp = interpreterName ext
   hPutStrLn stderr $ "Starting interpreter " <> show interp
   (Just pyin, _, _, pyh) <-
     createProcess
