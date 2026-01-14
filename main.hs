@@ -102,7 +102,7 @@ main = do
     exitFailure
 
   (ch, _inotify) <- setupInotify options
-  cch <- debounceChan (round (1e6 * debounce_s)) ch
+  cch <- rateLimit (round (1e6 * debounce_s)) ch
   writeChan ch Chunk -- initial run
   -- variables for the interpreter are py though it could be maxima/R etc.
   pyhv <- newEmptyMVar
@@ -125,7 +125,7 @@ main = do
     ref <- newIORef []
 
     let step = do
-          chanAct <- maximum <$> readChan cch
+          chanAct <- readChan cch
           let additions x = setup : x <> [test]
           nc <- additions . splitContent ext <$> readFileRetry retry_us (retry_attempts - 1) filepath
           oc <- readIORef ref
@@ -195,24 +195,24 @@ getMaybeFilePath = \case
   Attributes {maybeFilePath = x} -> x
   _ -> Nothing
 
--- | @debounceChan us ch@ produces a new chan @cch@
--- that chunks the contents of @ch@ every @us@ microseconds
--- (with the newest at the head of the list)
-debounceChan :: Int -> Chan a -> IO (Chan (NonEmpty a))
-debounceChan 0 ch = do
+-- | @cch <- rateLimit us ch@ makes a new chan @cch@
+-- that's delayed by (at least) @us@ microseconds
+-- and reports the newest value found in that time interval
+rateLimit :: Int -> Chan a -> IO (Chan a)
+rateLimit 0 ch = do
   cch <- newChan
   forkIO $ forever do
     x <- readChan ch
-    writeChan cch (NE.singleton x)
+    writeChan cch x
   return cch
-debounceChan us ch = do
+rateLimit us ch = do
   out <- newChan
   forkIO $ forever $ do
     first <- readChan ch
     let loop acc = do
           mv <- timeout us (readChan ch)
           case mv of
-            Just v -> loop (v NE.<| acc)
+            Just v -> loop v
             Nothing -> writeChan out acc
-    loop (NE.singleton first)
+    loop first
   return out
