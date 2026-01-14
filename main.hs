@@ -73,7 +73,7 @@ interpreterName = \case
   x -> error $ "Don't know how to interpret file extension " <> show x
 
 interpreterWrap = \cases
-  ".R" x -> "tryCatch({" <> x <> "}, error = function(e) print(e))"
+  ".r" x -> "tryCatch(eval(parse(text = " <> show x <> ")), error = function(e) print(e))"
   _ x -> x
 
 stripCommonPrefix :: (Eq a) => [a] -> [a] -> [a]
