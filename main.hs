@@ -5,6 +5,7 @@ import Control.Exception
 import Control.Lens
 import Control.Monad
 import qualified Data.ByteString.Char8 as B8
+import Data.Char
 import Data.Foldable
 import Data.IORef
 import Data.List.NonEmpty (NonEmpty (..))
@@ -64,11 +65,11 @@ splitContent = splitOn . getDelimiter
       _ -> ""
 
 interpreterName = \case
-  ".R" -> ("R", ["-q", "--no-save"])
   ".py" -> ("python", ["-i", "-u"])
   ".mac" -> ("maxima", ["-q"])
   ".wxm" -> ("maxima", ["-q"])
   ".jl" -> ("julia", ["-q"])
+  x | x `elem` [".r", ".rmd"] -> ("R", ["-q", "--no-save"])
   x -> error $ "Don't know how to interpret file extension " <> show x
 
 interpreterWrap = \cases
@@ -81,10 +82,11 @@ stripCommonPrefix _ ys = ys
 
 -- also have an R option
 pyprocess ext = do
-  hPutStrLn stderr $ "Starting interpreter " <> show (interpreterName ext)
+  let interp = interpreterName (map toLower ext)
+  hPutStrLn stderr $ "Starting interpreter " <> show interp
   (Just pyin, _, _, pyh) <-
     createProcess
-      (uncurry System.Process.proc (interpreterName ext))
+      (uncurry System.Process.proc interp)
         { std_in = CreatePipe,
           std_out = Inherit,
           std_err = Inherit
