@@ -8,6 +8,7 @@ import qualified Data.ByteString.Char8 as B8
 import Data.Foldable
 import Data.IORef
 import Data.List.NonEmpty (NonEmpty (..))
+import qualified Data.List.NonEmpty as NE
 import Data.List.Split
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -19,6 +20,7 @@ import System.INotify (Event (..), EventVariety (..), addWatch, initINotify, rem
 import System.IO
 import System.IO.Error
 import System.Process
+import System.Timeout
 import Text.Printf (printf)
 
 data WatchCodeCells = WatchCodeCells
@@ -194,27 +196,21 @@ getMaybeFilePath = \case
 -- | @debounceChan us ch@ produces a new chan @cch@
 -- that chunks the contents of @ch@ every @us@ microseconds
 -- (with the newest at the head of the list)
-debounceChan :: Int -> Chan a -> IO (Chan [a])
-debounceChan us ch = do
+debounceChan :: Int -> Chan a -> IO (Chan (NonEmpty a))
+debounceChan 0 ch = do
   cch <- newChan
-  chunk <- newIORef []
-  lock <- newEmptyMVar
-
-  delay <- forkIO $ forever $ try @ResetTimer do
-    threadDelay us
-    tryPutMVar lock ()
-
   forkIO $ forever do
-    v <- readChan ch
-    atomicModifyIORef chunk \vs -> (v : vs, ())
-    throwTo delay ResetTimer
-
-  forkIO $ forever do
-    takeMVar lock
-    v <- atomicModifyIORef chunk ([],)
-    unless (null v) (writeChan cch v)
+    x <- readChan ch
+    writeChan cch (NE.singleton x)
   return cch
-
-data ResetTimer = ResetTimer deriving (Show)
-
-instance Exception ResetTimer
+debounceChan us ch = do
+  out <- newChan
+  forkIO $ forever $ do
+    first <- readChan ch
+    let loop acc = do
+          mv <- timeout us (readChan ch)
+          case mv of
+            Just v -> loop (v NE.<| acc)
+            Nothing -> writeChan out acc
+    loop (NE.singleton first)
+  return out
