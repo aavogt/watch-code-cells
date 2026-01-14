@@ -1,5 +1,3 @@
-{-# LANGUAGE TypeApplications #-}
-
 import Control.Concurrent hiding (yield)
 import Control.Exception
 import Control.Lens
@@ -115,7 +113,6 @@ main = do
       l <- getLine
       pyin <- takeMVar pyinv
       hPutStrLn pyin l
-      putMVar pyhv pyin -- exceptions...
       hFlush pyin
       putMVar pyinv pyin
 
