@@ -105,22 +105,19 @@ main = do
   cch <- rateLimit (round (1e6 * debounce_s)) ch
   writeChan ch Chunk -- initial run
   -- variables for the interpreter are py though it could be maxima/R etc.
-  pyhv <- newEmptyMVar
-  forkIO $ forever do
-    l <- getLine
-    pyh <- readMVar pyhv
-    hPutStrLn pyh l
+  pyinv <- newEmptyMVar
 
   forever do
     (pyin, pyh) <- pyprocess ext
-    putMVar pyhv pyin
+    putMVar pyinv pyin
 
     th <- forkIO $ forever do
       l <- getLine
-      pyin <- takeMVar pyhv
+      pyin <- takeMVar pyinv
       hPutStrLn pyin l
       putMVar pyhv pyin -- exceptions...
       hFlush pyin
+      putMVar pyinv pyin
 
     ref <- newIORef []
 
@@ -129,21 +126,21 @@ main = do
           let additions x = setup : x <> [test]
           nc <- additions . splitContent ext <$> readFileRetry retry_us (retry_attempts - 1) filepath
           oc <- readIORef ref
-          pyin <- takeMVar pyhv
+          pyin <- takeMVar pyinv
           hPutStrLn pyin ""
           chunks <- case chanAct of
             Chunk -> return $ stripCommonPrefix oc nc
             Reload -> return nc
             Restart -> throwIO Restart
-          for_ chunks (hPutStrLn pyin . interpreterWrap ext)
-          putMVar pyhv pyin
+          for_ chunks (hPutStrLn pyin)
+          putMVar pyinv pyin
           hFlush pyin
           writeIORef ref nc
 
     let kill = do
           terminateProcess pyh
           hClose pyin
-          tryTakeMVar pyhv
+          tryTakeMVar pyinv
           killThread th
 
     forever step `finally` kill
