@@ -13,7 +13,7 @@ import qualified Data.Map as M
 import qualified Data.Text as T
 import System.Console.CmdArgs
 import System.Console.CmdArgs.Explicit (HelpFormat (..), helpText)
-import System.Exit (exitFailure)
+import System.Exit (exitFailure, ExitCode (ExitSuccess))
 import System.FilePath
 import System.INotify (Event (..), EventVariety (..), addWatch, initINotify, removeWatch)
 import System.IO
@@ -105,12 +105,17 @@ main = do
   -- variables for the interpreter are py though it could be maxima/R etc.
   pyinv <- newEmptyMVar
 
+  killMain <- myThreadId <&> \i -> throwTo i ExitSuccess
   forever do
     (pyin, pyh) <- pyprocess ext
     putMVar pyinv pyin
 
     th <- forkIO $ forever do
-      l <- getLine
+      l <- getLine `catch` \e ->
+        if isEOFError e then do
+            killMain
+            throwIO ThreadKilled
+          else throwIO e
       pyin <- takeMVar pyinv
       hPutStrLn pyin l
       hFlush pyin
