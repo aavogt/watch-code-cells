@@ -48,3 +48,4 @@ see also https://github.com/ndmitchell/ghcid, knitr, jupyter, ipython %load_ext 
   - [x] /proc/<own pid>/task/<own pid>/children has the interpreter pid
   - [ ] /proc/<child>/fd/* is the list of open files?
   - [ ] but these change over time?
+- [ ] maxima ending with a comment fails silently

@@ -2,6 +2,8 @@ import Control.Concurrent hiding (yield)
 import Control.Exception
 import Control.Lens
 import Control.Monad
+import qualified Control.Monad.Catch as InputT
+import Control.Monad.Trans.Class
 import qualified Data.ByteString.Char8 as B8
 import Data.Char
 import Data.Foldable
@@ -11,9 +13,11 @@ import qualified Data.List.NonEmpty as NE
 import Data.List.Split
 import qualified Data.Map as M
 import qualified Data.Text as T
+import Data.Traversable
 import System.Console.CmdArgs
 import System.Console.CmdArgs.Explicit (HelpFormat (..), helpText)
-import System.Exit (exitFailure, ExitCode (ExitSuccess))
+import System.Console.Haskeline
+import System.Exit (ExitCode (ExitSuccess), exitFailure)
 import System.FilePath
 import System.INotify (Event (..), EventVariety (..), addWatch, initINotify, removeWatch)
 import System.IO
@@ -110,16 +114,19 @@ main = do
     (pyin, pyh) <- pyprocess ext
     putMVar pyinv pyin
 
-    th <- forkIO $ forever do
-      l <- getLine `catch` \e ->
-        if isEOFError e then do
-            killMain
-            throwIO ThreadKilled
-          else throwIO e
-      pyin <- takeMVar pyinv
-      hPutStrLn pyin l
-      hFlush pyin
-      putMVar pyinv pyin
+    th <- forkIO $ runInputT defaultSettings $ forever do
+      ml <-
+        getInputLine "" `InputT.catch` \e ->
+          if isEOFError e
+            then do
+              lift killMain
+              InputT.throwM ThreadKilled
+            else InputT.throwM e
+      for ml \l -> lift $ do
+        pyin <- takeMVar pyinv
+        hPutStrLn pyin l
+        hFlush pyin
+        putMVar pyinv pyin
 
     ref <- newIORef []
 

@@ -15,6 +15,9 @@ dependencies:
   - containers
   - time
   - cmdargs
+  - haskeline
+  - exceptions
+  - transformers
 
 default-extensions:
   - BlockArguments
