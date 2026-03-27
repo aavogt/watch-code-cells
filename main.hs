@@ -8,8 +8,6 @@ import qualified Data.ByteString.Char8 as B8
 import Data.Char
 import Data.Foldable
 import Data.IORef
-import Data.List.NonEmpty (NonEmpty (..))
-import qualified Data.List.NonEmpty as NE
 import Data.List.Split
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -24,7 +22,6 @@ import System.IO
 import System.IO.Error
 import System.Process
 import System.Timeout
-import Text.Printf (printf)
 
 data WatchCodeCells = WatchCodeCells
   { filepath :: FilePath,
