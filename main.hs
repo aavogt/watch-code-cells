@@ -45,6 +45,7 @@ options =
       retry_us = 100000 &= help "When rereading a filepath, wait this many microseconds",
       retry_attempts = 10 &= help "If reading the filepath fails, try this many attempts. 0 for infinite retries."
     }
+    &= verbosity
     &= summary "watch-code-cells <file>"
     &= details
       [ "Given a file with chunks delimited by `# %%` (.R .py .jl), or `/* [wxMaxima: input   start ] */` (.wxm .mac),",
@@ -82,7 +83,7 @@ stripCommonPrefix _ ys = ys
 -- also have an R option
 pyprocess ext = do
   let interp = interpreterName ext
-  hPutStrLn stderr $ "Starting interpreter " <> show interp
+  whenLoud $ putStrLn $ "Starting interpreter " <> show interp
   (Just pyin, _, _, pyh) <-
     createProcess
       (uncurry System.Process.proc interp)
