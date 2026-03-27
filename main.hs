@@ -66,7 +66,7 @@ interpreterName = \case
   ".py" -> ("python", ["-i", "-u"])
   ".mac" -> ("maxima", ["-q"])
   ".wxm" -> ("maxima", ["-q"])
-  ".jl" -> ("julia", ["-q"])
+  ".jl" -> ("julia", ["-q", "--threads=auto"])
   x | x `elem` [".r", ".rmd"] -> ("R", ["-q", "--no-save", "--interactive"])
   x -> error $ "Don't know how to interpret file extension " <> show x
 
