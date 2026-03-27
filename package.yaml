@@ -1,6 +1,6 @@
 synopsis: Like ghcid for plain text jupyter notebooks.
 
-license: BSD-2
+license: BSD2
 
 dependencies:
   - base

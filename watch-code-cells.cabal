@@ -7,7 +7,7 @@ cabal-version: 1.12
 name:           watch-code-cells
 version:        0.0.0
 synopsis:       Like ghcid for plain text jupyter notebooks.
-license:        BSD-2
+license:        BSD2
 license-file:   LICENSE
 build-type:     Simple
 
