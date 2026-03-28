@@ -54,23 +54,30 @@ options =
         "For reproducible results, a chunk should not write variables it depends on."
       ]
 
+data FT = FileR | FilePY | FileRMD | FileJL | FileMaxima
+
+getFT fp = case map toLower (takeExtension fp) of
+  ".r" -> FileR
+  ".py" -> FilePY
+  ".rmd" -> FileRMD
+  ".jl" -> FileJL
+  ".mac" -> FileMaxima
+  ".wxm" -> FileMaxima
+  p -> error $ "unknown file extension: " ++ show p
+
 splitContent = splitOn . getDelimiter
   where
     getDelimiter = \case
-      ".r" -> "\n# %%"
-      ".py" -> "\n# %%"
-      p | p `elem` [".mac", ".wxm"] -> "\n/* [wxMaxima: input   start ] */"
-      ".rmd" -> "\n```" -- TODO regex-applicative would be better, plus this format allows different interpreters, chunk options etc.
-      ".jl" -> "\n# %%"
-      _ -> ""
+      FileMaxima -> "\n/* [wxMaxima: input   start ] */"
+      FileRMD -> "\n```" -- TODO regex-applicative would be better, plus this format allows different interpreters, chunk options etc.
+      _ -> "\n# %%"
 
 interpreterName = \case
-  ".py" -> ("python", ["-i", "-u"])
-  ".mac" -> ("maxima", ["-q"])
-  ".wxm" -> ("maxima", ["-q"])
-  ".jl" -> ("julia", ["-q", "--threads=auto"])
-  x | x `elem` [".r", ".rmd"] -> ("R", ["-q", "--no-save", "--interactive"])
-  x -> error $ "Don't know how to interpret file extension " <> show x
+  FilePY -> ("python", ["-i", "-u"])
+  FileMaxima -> ("maxima", ["-q"])
+  FileJL -> ("julia", ["-q", "--threads=auto"])
+  FileRMD -> ("R", ["-q", "--no-save", "--interactive"])
+  FileR -> ("R", ["-q", "--no-save", "--interactive"])
 
 interpreterWrap = \cases
   ".r" x -> "tryCatch(eval(parse(text = " <> show x <> ")), error = function(e) print(e))"
@@ -96,7 +103,7 @@ pyprocess ext = do
 main = do
   let options' = cmdArgsMode options
   options@WatchCodeCells {..} <- cmdArgsRun options'
-  let ext = map toLower (takeExtension filepath)
+  let ft = getFT filepath
   when (null filepath) $ do
     print (helpText [] HelpFormatDefault options')
     exitFailure
@@ -109,7 +116,7 @@ main = do
 
   killMain <- myThreadId <&> \i -> throwTo i ExitSuccess
   forever do
-    (pyin, pyh) <- pyprocess ext
+    (pyin, pyh) <- pyprocess ft
     putMVar pyinv pyin
 
     th <- forkIO $ runInputT defaultSettings $ forever do
@@ -131,7 +138,7 @@ main = do
     let step = do
           chanAct <- readChan cch
           let additions x = setup : x <> [test]
-          nc <- additions . splitContent ext <$> readFileRetry retry_us (retry_attempts - 1) filepath
+          nc <- additions . splitContent ft <$> readFileRetry retry_us (retry_attempts - 1) filepath
           oc <- readIORef ref
           pyin <- takeMVar pyinv
           hPutStrLn pyin ""
