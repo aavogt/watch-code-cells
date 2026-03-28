@@ -49,3 +49,4 @@ see also https://github.com/ndmitchell/ghcid, knitr, jupyter, ipython %load_ext 
   - [ ] /proc/<child>/fd/* is the list of open files?
   - [ ] but these change over time?
 - [ ] maxima ending with a comment fails silently
+- [ ] C-D EOF should exit but haskeline doesn't pass it on?
