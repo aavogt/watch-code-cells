@@ -37,7 +37,6 @@ executable watch-code-cells
     , hinotify
     , lens
     , process
-    , split
     , text
     , time
     , transformers

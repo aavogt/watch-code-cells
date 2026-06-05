@@ -5,7 +5,6 @@ license: BSD2
 dependencies:
   - base
   - hinotify
-  - split
   - lens
   - process
   - bytestring
