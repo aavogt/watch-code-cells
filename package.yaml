@@ -27,6 +27,7 @@ default-extensions:
   - RecordWildCards
   - ScopedTypeVariables
   - TupleSections
+  - OverloadedStrings
 
 executable:
   ghc-options:

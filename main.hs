@@ -11,6 +11,7 @@ import Data.IORef
 import Data.List.Split
 import qualified Data.Map as M
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import Data.Traversable
 import System.Console.CmdArgs
 import System.Console.CmdArgs.Explicit (HelpFormat (..), helpText)
@@ -27,7 +28,7 @@ data WatchCodeCells = WatchCodeCells
   { filepath :: FilePath,
     reload :: [FilePath],
     restart :: [FilePath],
-    test, setup :: String,
+    test, setup :: T.Text,
     debounce_s :: Double,
     retry_us, retry_attempts :: Int
   }
@@ -39,8 +40,8 @@ options =
     { filepath = def &= args &= typFile,
       reload = def &= typFile &= help "Resend all chunks when the given file or directory changes (defaults to none)",
       restart = def &= typFile &= help "Restart python/R/maxima/julia when the given file or directory changes (defaults to none)",
-      test = def &= help "Evaluate this expression after the last cell",
-      setup = def &= help "Evaluate this expression before the first cell",
+      test = "" &= help "Evaluate this expression after the last cell",
+      setup = "" &= help "Evaluate this expression before the first cell",
       debounce_s = 0.2 &= help "After receiving an event, delay running this many seconds (0.2 by default): only resend run once this time limit",
       retry_us = 100000 &= help "When rereading a filepath, wait this many microseconds",
       retry_attempts = 10 &= help "If reading the filepath fails, try this many attempts. 0 for infinite retries."
@@ -146,7 +147,7 @@ main = do
             Chunk -> return $ stripCommonPrefix oc nc
             Reload -> return nc
             Restart -> throwIO Restart
-          for_ chunks (hPutStrLn pyin)
+          for_ chunks (T.hPutStrLn pyin)
           putMVar pyinv pyin
           hFlush pyin
           writeIORef ref nc
@@ -166,7 +167,7 @@ readFileRetry us n filepath = go n
   where
     go 0 = throwIO (userError "File not found, --retry-attempts or --retry-us may be too low.")
     go n =
-      readFile filepath
+      T.readFile filepath
         `catch` \e -> do
           if isDoesNotExistError e
             then do
