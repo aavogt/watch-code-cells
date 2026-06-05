@@ -49,7 +49,8 @@ options =
     &= verbosity
     &= summary "watch-code-cells <file>"
     &= details
-      [ "Given a file with chunks delimited by `# %%` (.R .py .jl), or `/* [wxMaxima: input   start ] */` (.wxm .mac),",
+      [ "Given a file with chunks delimited lines starting with `# %%` (.R .py .jl),",
+        " or `/**/` `/* [wxMaxima: input   start ] */` (.wxm .mac),",
         "Start the interpreter (R, python, julia, maxima), and send the whole file.",
         "When the file changes, only send the changed chunk and all subsequent chunks.",
         "For reproducible results, a chunk should not write variables it depends on."
@@ -66,12 +67,12 @@ getFT fp = case map toLower (takeExtension fp) of
   ".wxm" -> FileMaxima
   p -> error $ "unknown file extension: " ++ show p
 
-splitContent = splitOn . getDelimiter
+splitContent ft content = foldr (concatMap . T.splitOn) [content] (getDelimiters ft)
   where
-    getDelimiter = \case
-      FileMaxima -> "\n/* [wxMaxima: input   start ] */"
-      FileRMD -> "\n```" -- TODO regex-applicative would be better, plus this format allows different interpreters, chunk options etc.
-      _ -> "\n# %%"
+    getDelimiters = \case
+      FileMaxima -> ["\n/* [wxMaxima: input   start ] */", "\n/**/"]
+      FileRMD -> ["\n```"] -- TODO regex-applicative would be better, plus this format allows different interpreters, chunk options etc.
+      _ -> ["\n# %%"]
 
 interpreterName = \case
   FilePY -> ("python", ["-i", "-u"])
