@@ -77,7 +77,29 @@ splitContent ft content = foldr (concatMap . T.splitOn) [content] (getDelimiters
 interpreterName = \case
   FilePY -> ("python", ["-i", "-u"])
   FileMaxima -> ("maxima", ["-q"])
-  FileJL -> ("julia", ["-q", "--threads=auto"])
+  FileJL ->
+    ( "julia",
+      [ "-q",
+        "--threads=auto",
+        "-e",
+        "import REPL;\
+        \term = REPL.Terminals.TTYTerminal(\"dumb\", stdin, stdout, stderr);\
+        \repl = REPL.LineEditREPL(term, true);\
+        \REPL.run_repl(repl)"
+      ]
+      -- not quite right for watch-code-cell's stdin text input
+      -- because
+      -- julia>1+1 # left over from haskeline
+      -- julia>1+1 # echoed by julia
+      -- 2 # desired output
+      --
+      -- julia>1+1; # typed
+      -- julia>1+1; # echoed by julia
+      -- # empty line
+      --
+      -- I don't want an extra blank line
+      -- I don't want the prompt?
+    )
   FileRMD -> ("R", ["-q", "--no-save", "--interactive"])
   FileR -> ("R", ["-q", "--no-save", "--interactive"])
 
